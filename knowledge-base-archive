@@ -1,0 +1,119 @@
+<?php
+/**
+ * The template for displaying archive pages
+ *
+ * @link https://developer.wordpress.org/themes/basics/template-hierarchy/
+ *
+ * @package jlmmortgages
+ */
+
+get_header(); ?>
+<div class="Container__wide">
+	<div class="Knowledge-base Container__wide white-space">
+		<form id="the-basics" class="search-bar container nopad" method="get" >
+	      <input class="typeahead" id="typeahead" type="text" name="id" placeholder="Search the knowledge base...">
+	    </form>
+	</div>
+	<div class="Knowledge-base-category card grid-item">
+			<?php
+		$terms = get_terms(['taxonomy' => 'knowledge_base_category','hide_empty' => true]);
+		foreach($terms as $term) {
+		?>
+			<h3><?php echo $term->name; ?></h3>
+			<ul>
+				<?php $args = array(
+					'posts_per_page'   => -1,														
+					'orderby'          => 'title',
+					'order'            => 'ASC',					
+					'post_type'        => 'knowledge_base',					
+					'post_status'      => 'publish',
+					'suppress_filters' => true,
+					'tax_query' 	   => array (
+						array (
+								'taxonomy' => 'knowledge_base_category',
+								'terms' => $term->term_id,
+						),		
+					)
+				);				
+				$posts_array = get_posts( $args ); 
+				foreach($posts_array as $post) {
+					$url = get_the_permalink($post->ID);
+					$content = get_the_content($post->ID);
+					$title = wp_trim_words($content,5,"...")
+				?>
+				<li>
+					<i class="fa fa-file-o fa-fw"></i>
+					<a title="<?php $title; ?>" href="<?php echo $url; ?>"><?php echo $post->post_title; ?></a>
+				</li>
+				<?php
+				}
+				?>
+			</ul>
+		<?php 
+		}
+		?>
+	</div>
+</div>
+<?php
+$articleArr = array();
+$args = array(
+	'posts_per_page'   => -1,														
+	'orderby'          => 'title',
+	'order'            => 'ASC',					
+	'post_type'        => 'knowledge_base',					
+	'post_status'      => 'publish',
+	'suppress_filters' => true,	
+);				
+$posts_array = get_posts( $args ); 
+foreach($posts_array as $post) {
+	$articleArr[] = $post->post_title;
+}
+$articleStr = implode('","', $articleArr);
+?>			
+<script type="text/javascript">
+  var substringMatcher = function(strs) {
+    return function findMatches(q, cb) {
+      var matches, substringRegex;
+
+      // an array that will be populated with substring matches
+      matches = [];
+
+      // regex used to determine if a string contains the substring `q`
+      substrRegex = new RegExp(q, 'i');
+
+      // iterate through the pool of strings and for any string that
+      // contains the substring `q`, add it to the `matches` array
+      jQuery.each(strs, function(i, str) {
+        if (substrRegex.test(str)) {
+          matches.push(str);
+        }
+      });
+
+      cb(matches);
+    };
+  };
+var articles = [<?php echo '"'.$articleStr.'"'; ?>];    
+
+
+  jQuery('#the-basics .typeahead').typeahead({
+    hint: true,
+    highlight: true,
+    minLength: 1
+  },
+  {
+    name: 'articles',
+    source: substringMatcher(articles)
+  });
+
+  jQuery('.typeahead').bind('typeahead:select', function(ev, suggestion) {
+    // document.getElementById("the-basics").submit();
+    var typeahead_value = document.getElementById('typeahead').value;
+    console.log(typeahead_value);
+    var typeahead_value1 = typeahead_value.replace(" ","-").replace(" ","-").replace(" ","-");
+    //alert(typeahead_value1);
+    //document.write(typeahead_value1);
+    window.location = '/knowledge-base/' + typeahead_value1;
+  });
+</script>  
+<?php
+get_footer();
